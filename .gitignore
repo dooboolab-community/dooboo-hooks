@@ -9,3 +9,9 @@ tsconfig.tsbuildinfo
 index.js.flow
 index.d.ts
 index.js
+
+# Jest Cache
+.jest/
+
+# Yarn
+yarn-error.log
