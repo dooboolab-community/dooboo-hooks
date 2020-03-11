@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "lib": ["es2017"],
-    "jsx": "react-native",
+    "jsx": "react",
     "noResolve": false,
     "noImplicitAny": false,
     "removeComments": false,
@@ -15,5 +15,4 @@
   },
   "compileOnSave": true,
   "exclude": ["node_modules"],
-  "include": ["./index.ts"]
 }
