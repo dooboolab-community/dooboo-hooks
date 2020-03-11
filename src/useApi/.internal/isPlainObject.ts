@@ -9,7 +9,7 @@ function isObject(any): any is object {
  * @param value
  */
 function isPlainObject(value): value is object {
-  if (!isObject(value)) return false;
+  if (!value || !isObject(value)) return false;
 
   if (Object.getPrototypeOf(value) === null) {
     return true;

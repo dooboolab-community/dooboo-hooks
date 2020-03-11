@@ -1,16 +1,11 @@
-import camelize from "../camelize";
+import convertCamelCaseFromSnakeCase from "../convertCamelCaseFromSnakeCase";
 
 describe('convert strings to camelCase!', () => {
-  it('white space strings to camelCase', () => {
-    expect(camelize('')).toBe('')
-    expect(camelize('doo boo')).toBe('dooBoo')
-    expect(camelize('')).toBe('')
-    expect(camelize('')).toBe('')
-    expect(camelize('')).toBe('')
-    expect(camelize('')).toBe('')
-    expect(camelize('')).toBe('')
-    expect(camelize('')).toBe('')
-    expect(camelize('')).toBe('')
-    expect(camelize('')).toBe('')
+  it('snake_case to camelCase', () => {
+    expect(convertCamelCaseFromSnakeCase('    snake_case      ')).toBe('snakeCase');
+    expect(convertCamelCaseFromSnakeCase('       ______snake______case_____')).toBe('snakeCase');
+    expect(convertCamelCaseFromSnakeCase('_s_n_a_k_e_       ')).toBe('sNAKE');
+    expect(convertCamelCaseFromSnakeCase('_____________________   ')).toBe('');
+    expect(convertCamelCaseFromSnakeCase('_________^^________mym0404 ')).toBe('^^Mym0404');
   });
 });
