@@ -1,0 +1,21 @@
+# tsc outDir, build directory
+dist/
+
+# Webstorm(or any other Intellij IDE) config
+.idea/
+
+# Node modules
+node_modules/
+
+# Built files
+tsconfig.tsbuildinfo
+index.js.flow
+index.d.ts
+index.js
+
+# Jest Cache
+.jest/
+coverage/
+
+# Yarn
+yarn-error.log

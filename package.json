@@ -1,0 +1,44 @@
+{
+  "name": "dooboo-hooks",
+  "version": "0.0.1",
+  "description": "No description",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "postinstall": "dooboolab-welcome postinstall",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint -c .eslintrc.js 'index.ts'",
+    "test": "jest",
+    "test:typescript": "tsc --noEmit",
+    "tsc:sync": "npx typesync",
+    "tsc": "tsc",
+    "validate": "npm run lint && npm run test:typescript && npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dooboolab/dooboo-hooks"
+  },
+  "keywords": [
+    "react-native"
+  ],
+  "author": "dooboolab",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "*",
+    "react-native": ">=0.59"
+  },
+  "dependencies": {
+    "dooboolab-welcome": "^1.1.1"
+  },
+  "devDependencies": {
+    "@dooboo/eslint-config": "^0.3.8",
+    "@types/eslint": "^6.1.8",
+    "@types/react": "16.9.23",
+    "@types/react-native": "0.61.20",
+    "eslint": "^6.8.0",
+    "jest": "^25.1.0",
+    "@types/jest": "^25.1.4",
+    "typescript": "^3.8.3",
+    "ts-jest": "^25.2.1"
+  }
+}

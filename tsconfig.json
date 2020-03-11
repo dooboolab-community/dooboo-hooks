@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "lib": ["es2017"],
+    "jsx": "react",
+    "noResolve": false,
+    "noImplicitAny": false,
+    "removeComments": false,
+    "sourceMap": true,
+    "module": "es2015",
+    "moduleResolution": "node",
+    "target": "es5",
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    "outDir": "./dist",                        /* Redirect output structure to the directory. */
+    "rootDir": "./src"
+  },
+  "compileOnSave": true,
+  "exclude": ["node_modules"],
+}
