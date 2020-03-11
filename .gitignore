@@ -15,6 +15,7 @@ index.js
 
 # Jest Cache
 .jest/
+coverage/
 
 # Yarn
 yarn-error.log
