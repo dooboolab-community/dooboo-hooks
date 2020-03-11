@@ -1,10 +1,5 @@
-IapExample/
 .idea/
-gen/
 node_modules/
-android/react-native-iap.iml
-android/android.iml
 tsconfig.tsbuildinfo
 index.ts
 tsconfig.json
-greenkeeper.json
