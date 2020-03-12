@@ -42,7 +42,8 @@
     "ts-jest": "^25.2.1",
     "prettier": "^1.19.1",
     "prettier-plugin-import-sort": "^0.0.3",
-    "import-sort-style-eslint": "^6.0.0"
+    "import-sort-style-eslint": "^6.0.0",
+    "jest-fetch-mock": "^3.0.3"
   },
   "importSort": {
     ".js, .jsx": {
