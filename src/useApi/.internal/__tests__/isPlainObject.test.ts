@@ -18,7 +18,7 @@ describe('test isPlainObject', () => {
   });
 
   it('return value with object instantiated with prototype of Object constructor should be true(branch cover)', () => {
-    expect(isPlainObject(getPrototypeOf(new Object()))).toBe(true);
+    expect(isPlainObject(Object.create(null))).toBe(true);
   })
 
   it('return value with class instance should be false', () => {
