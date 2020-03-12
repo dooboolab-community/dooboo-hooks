@@ -39,6 +39,20 @@
     "jest": "^25.1.0",
     "@types/jest": "^25.1.4",
     "typescript": "^3.8.3",
-    "ts-jest": "^25.2.1"
+    "ts-jest": "^25.2.1",
+    "prettier": "^1.19.1",
+    "prettier-plugin-import-sort": "^0.0.3",
+    "import-sort-style-eslint": "^6.0.0"
+  },
+  "importSort": {
+    ".js, .jsx": {
+      "style": "eslint",
+      "options": {}
+    },
+    ".ts, .tsx": {
+      "parser": "typescript",
+      "style": "eslint",
+      "options": {}
+    }
   }
 }
