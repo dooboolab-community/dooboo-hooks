@@ -1,7 +1,11 @@
 import convertObjectKeysCamelCaseFromSnakeCase from './convertObjectKeysCamelCaseFromSnakeCase';
 
 type RestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-type Header = { [P in string]: string } & { 'Content-Type'?: ContentType; Accept: ContentType; Authorization?: string };
+type Header = { [P in string]: string } & {
+  'Content-Type'?: ContentType;
+  Accept?: ContentType;
+  Authorization?: string;
+};
 
 type ReactNativeFile = {
   key: string;
@@ -18,20 +22,20 @@ type ContentType = 'application/json' | 'application/x-www-form-urlencoded;chars
  * The method for uploading files to api server.
  * This method won't be used from external modules
  *
- * Note: **the properties in body object will be casted to string** because of Content-Type is fixed with multipart/form-data
+ * Note: **the properties in body object will be casted to string**
+ * because of Content-Type is fixed with multipart/form-data
  */
 async function upload(
   uri: string,
   requestInit: RequestInit,
-  files: ReactNativeFile[],
-  body?: object,
+  files: ReactNativeFile[] = [],
+  body: object = {},
 ): Promise<Response> {
   const formData = new FormData();
 
-  body &&
-    Object.entries(body).forEach(([key, value]) => {
-      formData.append(key, JSON.stringify(value));
-    });
+  Object.entries(body).forEach(([key, value]) => {
+    formData.append(key, JSON.stringify(value));
+  });
 
   Object.entries(files).forEach(([key, file]) => {
     formData.append(key, file);
@@ -43,7 +47,11 @@ async function upload(
   return await fetch(uri, requestInit);
 }
 
-async function requestFormUrlEncoded(uri: string, requestInit: RequestInit, body?: object): Promise<Response> {
+async function requestFormUrlEncoded(
+  uri: string,
+  requestInit: RequestInit,
+  body?: object | URLSearchParams,
+): Promise<Response> {
   let encodedBody = new URLSearchParams();
 
   if (body instanceof URLSearchParams) {
@@ -56,7 +64,7 @@ async function requestFormUrlEncoded(uri: string, requestInit: RequestInit, body
   }
 
   requestInit.headers && (requestInit.headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8');
-  requestInit.body = encodedBody;
+  if (!/get/i.test(requestInit.method)) requestInit.body = encodedBody;
 
   return await fetch(uri, requestInit);
 }
@@ -86,17 +94,21 @@ function constructUriWithQueryParams(uri: string, queryParams?: object) {
   return encodeURI(uri + params.toString());
 }
 
+type RequestOptions = {
+  queryParams?: object;
+  body?: object;
+  files?: ReactNativeFile[];
+  headers?: Header;
+};
 async function request<ResponseData = undefined>(
   method: RestMethod,
   uri: string,
-  contentType?: ContentType,
-  queryParams?: object,
-  body?: object,
-  files?: ReactNativeFile[],
-  headers?: Header,
+  options: RequestOptions = {},
 ): Promise<ResponseData & { cancel: () => void }> {
   const abortController = new AbortController();
   const abortSignal = abortController.signal;
+
+  const { queryParams, body, files, headers } = options;
 
   const constructedUri = constructUriWithQueryParams(uri, queryParams);
 
@@ -108,9 +120,12 @@ async function request<ResponseData = undefined>(
 
   let res: Response;
 
-  if (contentType === 'multipart/form-data' || (method === 'POST' && files)) {
+  if (headers?.['Content-Type'] === 'multipart/form-data' || (method === 'POST' && files)) {
     res = await upload(constructedUri, requestInitWithoutBody, files, body);
-  } else if (contentType === 'application/x-www-form-urlencoded;charset=UTF-8' || body instanceof URLSearchParams) {
+  } else if (
+    headers?.['Content-Type'] === 'application/x-www-form-urlencoded;charset=UTF-8' ||
+    body instanceof URLSearchParams
+  ) {
     res = await requestFormUrlEncoded(constructedUri, requestInitWithoutBody, body);
   } else {
     res = await requestJson(uri, requestInitWithoutBody, body);

@@ -1,19 +1,51 @@
+import { FetchMock, MockResponseInitFunction } from 'jest-fetch-mock';
+
 import request from '../ApiClient';
 
+const fetchMock = fetch as FetchMock;
+
 describe('application/json', () => {
-  it('api call should success', async () => {
-    type Data = {
-      resultCode: number;
-      msg: string;
-      data: {
-        phoneNumber: string;
-        email: string;
-        mainTime: string;
-        subTime: string;
-      };
-    };
-    const uri = 'https://iammathking.com/policy/customer';
-    const data = await request<Data>('GET', uri);
-    expect(data.data.email).toBe('theminq@teamturing.com');
+  beforeEach(fetchMock.resetMocks);
+
+  it('[GET] should success', async () => {
+    const mockedResult = JSON.stringify({
+      success: true,
+    });
+    fetchMock.mockIf(/https:\/\/dooboolab.com/i, mockedResult);
+    const uri = 'https://dooboolab.com/';
+    const { success } = await request<{ success: boolean }>('GET', uri);
+    expect(success).toBe(true);
+  });
+});
+
+describe('application/x-www-form-urlencoded;charset=UTF-8', () => {
+  beforeEach(fetchMock.resetMocks);
+
+  it('[GET] should success', async () => {
+    const mockedResult = JSON.stringify({
+      success: true,
+    });
+    fetchMock.mockIf(/https:\/\/dooboolab.com/i, mockedResult);
+    const uri = 'https://dooboolab.com/';
+    const { success } = await request<{ success: boolean }>('GET', uri, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+    });
+    expect(success).toBe(true);
+  });
+});
+
+describe('multipart/form-data', () => {
+  beforeEach(fetchMock.resetMocks);
+
+  it('[POST] should success', async () => {
+    const mockedResult = JSON.stringify({
+      success: true,
+    });
+    fetchMock.mockIf(/https:\/\/dooboolab.com/i, mockedResult);
+    const uri = 'https://dooboolab.com/';
+    const { success } = await request<{ success: boolean }>('POST', uri, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    expect(success).toBe(true);
   });
 });
