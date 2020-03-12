@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "lib": ["es2017"],
+    "lib": ["es2020"],
     "jsx": "react",
     "noResolve": false,
     "noImplicitAny": false,

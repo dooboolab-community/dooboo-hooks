@@ -1,13 +1,13 @@
 import convertCamelCaseFromSnakeCase from './convertCamelCaseFromSnakeCase';
 import isPlainObject from './isPlainObject';
 
-type Candidates = any[] | object;
+export type Candidate = any[] | object;
 
-function isArray<T>(objOrArray: Candidates): objOrArray is any[] {
+function isArray<T>(objOrArray: Candidate): objOrArray is any[] {
   return Array.isArray(objOrArray);
 }
 
-function convertObjectKeysCamelCaseFromSnakeCase(objOrArr: Candidates): Candidates {
+function convertObjectKeysCamelCaseFromSnakeCase(objOrArr: Candidate): Candidate {
   if (isArray(objOrArr)) {
     return (objOrArr).map(convertObjectKeysCamelCaseFromSnakeCase);
   } else {
