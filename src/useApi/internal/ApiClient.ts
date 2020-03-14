@@ -1,13 +1,13 @@
 import convertObjectKeysCamelCaseFromSnakeCase from './convertObjectKeysCamelCaseFromSnakeCase';
 
-type RestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-type Header = { [P in string]: string } & {
+export type RestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+export type Header = { [P in string]: string } & {
   'Content-Type'?: ContentType;
   Accept?: ContentType;
   Authorization?: string;
 };
 
-type ReactNativeFile = {
+export type ReactNativeFile = {
   key: string;
   file: {
     name: string;
@@ -16,7 +16,19 @@ type ReactNativeFile = {
   };
 };
 
-type ContentType = 'application/json' | 'application/x-www-form-urlencoded;charset=UTF-8' | 'multipart/form-data';
+export type ContentType =
+  | 'application/json'
+  | 'application/x-www-form-urlencoded;charset=UTF-8'
+  | 'multipart/form-data';
+
+export type RequestOptions = {
+  queryParams?: object;
+  body?: object;
+  files?: ReactNativeFile[];
+  headers?: Header;
+};
+
+export type DataWithCancel<T> = T & { cancel: () => void };
 
 /**
  * The method for uploading files to api server.
@@ -94,17 +106,11 @@ function constructUriWithQueryParams(uri: string, queryParams?: object) {
   return encodeURI(uri + params.toString());
 }
 
-type RequestOptions = {
-  queryParams?: object;
-  body?: object;
-  files?: ReactNativeFile[];
-  headers?: Header;
-};
 async function request<ResponseData = undefined>(
   method: RestMethod,
   uri: string,
   options: RequestOptions = {},
-): Promise<ResponseData & { cancel: () => void }> {
+): Promise<DataWithCancel<ResponseData>> {
   const abortController = new AbortController();
   const abortSignal = abortController.signal;
 

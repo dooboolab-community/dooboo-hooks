@@ -1,5 +1,4 @@
-import { FetchMock, MockResponseInitFunction } from 'jest-fetch-mock';
-
+import { FetchMock } from 'jest-fetch-mock';
 import request from '../ApiClient';
 
 const fetchMock = fetch as FetchMock;
