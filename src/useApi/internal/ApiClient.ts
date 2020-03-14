@@ -1,3 +1,4 @@
+import { constructUriWithQueryParams } from './constructUriWithQueryParams';
 import convertObjectKeysCamelCaseFromSnakeCase from './convertObjectKeysCamelCaseFromSnakeCase';
 
 export type RestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -23,7 +24,7 @@ export type ContentType =
 
 export type RequestOptions = {
   queryParams?: object;
-  body?: object;
+  body?: object | URLSearchParams;
   files?: ReactNativeFile[];
   headers?: Header;
 };
@@ -36,6 +37,8 @@ export type DataWithCancel<T> = T & { cancel: () => void };
  *
  * Note: **the properties in body object will be casted to string**
  * because of Content-Type is fixed with multipart/form-data
+ *
+ * @see https://dev.to/getd/x-www-form-urlencoded-or-form-data-explained-in-2-mins-5hk6
  */
 async function upload(
   uri: string,
@@ -56,7 +59,7 @@ async function upload(
   requestInit.headers && (requestInit.headers['Content-Type'] = 'multipart/form-data');
   requestInit.body = formData;
 
-  return await fetch(uri, requestInit);
+  return fetch(uri, requestInit);
 }
 
 async function requestFormUrlEncoded(
@@ -78,32 +81,14 @@ async function requestFormUrlEncoded(
   requestInit.headers && (requestInit.headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8');
   if (!/get/i.test(requestInit.method)) requestInit.body = encodedBody;
 
-  return await fetch(uri, requestInit);
+  return fetch(uri, requestInit);
 }
 
 async function requestJson(uri: string, requestInit: RequestInit, body?: object): Promise<Response> {
   requestInit.headers && (requestInit.headers['Content-Type'] = 'application/json');
   body && (requestInit.body = JSON.stringify(body));
 
-  return await fetch(uri, requestInit);
-}
-
-function constructUriWithQueryParams(uri: string, queryParams?: object) {
-  const paramsFromUri = new URLSearchParams(uri);
-  const params = new URLSearchParams();
-
-  queryParams &&
-    Object.entries(queryParams).forEach(([key, value]) => {
-      params.append(key, value + '');
-    });
-
-  paramsFromUri.forEach((value, key) => {
-    if (!params.has(key)) {
-      params.set(key, value);
-    }
-  });
-
-  return encodeURI(uri + params.toString());
+  return fetch(uri, requestInit);
 }
 
 async function request<ResponseData = undefined>(

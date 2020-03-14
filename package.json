@@ -28,7 +28,8 @@
     "react-native": ">=0.59"
   },
   "dependencies": {
-    "dooboolab-welcome": "^1.1.1"
+    "dooboolab-welcome": "^1.1.1",
+    "url": "^0.11.0"
   },
   "devDependencies": {
     "@dooboo/eslint-config": "^0.3.8",

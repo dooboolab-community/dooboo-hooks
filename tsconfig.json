@@ -13,7 +13,7 @@
     "allowSyntheticDefaultImports": true,
     "declaration": true,
     "esModuleInterop": true,
-    "outDir": "./dist",                        /* Redirect output structure to the directory. */
+    "outDir": "./dist" /* Redirect output structure to the directory. */,
     "rootDir": "./src"
   },
   "compileOnSave": true,
