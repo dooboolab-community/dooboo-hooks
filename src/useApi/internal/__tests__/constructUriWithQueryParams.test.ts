@@ -15,9 +15,9 @@ it('with params should be added params to uri', () => {
 });
 
 it('with params in uri should be same', () => {
-  const uri = 'https://www.google.com/?name=dooboo&password=a,wdaksjdlk';
+  const uri = 'https://www.google.com/?name=dooboo&password=awdaksjdlk';
 
-  expect(constructUriWithQueryParams(uri)).toBe(uri);
+  expect(constructUriWithQueryParams(uri)).toBe(encodeURI(uri));
 });
 
 it('same params should be merged with second argument data', () => {
