@@ -25,7 +25,7 @@ type UseApi<ResponseData> = {
 } & {
   [P in keyof ResponseData]?: ResponseData[P];
 };
-const useApi = <ResponseData>(api: ApiResult<ResponseData>, cold = false, dependencies = []): UseApi<ResponseData> => {
+const useApi = <ResponseData>(api: ApiResult<ResponseData>, dependencies = [], cold = false): UseApi<ResponseData> => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<ResponseData | null>(null);
   const [error, setError] = useState<Error | null>(null);
