@@ -1,4 +1,4 @@
-import convertCamelCaseFromSnakeCase from "../convertCamelCaseFromSnakeCase";
+import convertCamelCaseFromSnakeCase from '../convertCamelCaseFromSnakeCase';
 
 describe('convert strings to camelCase!', () => {
   it('snake_case to camelCase', () => {

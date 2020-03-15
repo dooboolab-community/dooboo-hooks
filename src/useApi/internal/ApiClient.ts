@@ -1,5 +1,10 @@
+import 'abortcontroller-polyfill';
+
 import { constructUriWithQueryParams } from './constructUriWithQueryParams';
 import convertObjectKeysCamelCaseFromSnakeCase from './convertObjectKeysCamelCaseFromSnakeCase';
+
+declare const window;
+const AbortController = window.AbortController;
 
 export type RestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type Header = { [P in string]: string } & {
@@ -29,7 +34,17 @@ export type RequestOptions = {
   headers?: Header;
 };
 
-export type DataWithCancel<T> = T & { cancel: () => void };
+export type Unsubscribe = () => void;
+export type ApiResult<ResponseData> = [() => Promise<ResponseData>, Unsubscribe];
+
+const defaultMethod: RestMethod = 'GET';
+const defaultHeader: Header = {
+  'Content-Type': 'application/json',
+  Accept: 'application/json',
+};
+const defaultRequestOptions: RequestOptions = {
+  headers: defaultHeader,
+};
 
 /**
  * The method for uploading files to api server.
@@ -40,7 +55,7 @@ export type DataWithCancel<T> = T & { cancel: () => void };
  *
  * @see https://dev.to/getd/x-www-form-urlencoded-or-form-data-explained-in-2-mins-5hk6
  */
-async function upload(
+function upload(
   uri: string,
   requestInit: RequestInit,
   files: ReactNativeFile[] = [],
@@ -62,7 +77,7 @@ async function upload(
   return fetch(uri, requestInit);
 }
 
-async function requestFormUrlEncoded(
+function requestFormUrlEncoded(
   uri: string,
   requestInit: RequestInit,
   body?: object | URLSearchParams,
@@ -71,60 +86,79 @@ async function requestFormUrlEncoded(
 
   if (body instanceof URLSearchParams) {
     encodedBody = body;
-  } else {
-    body &&
-      Object.entries(([key, value]) => {
-        encodedBody.append(encodeURIComponent(key), encodeURIComponent(value));
-      });
+  } else if (body) {
+    Object.entries(body).forEach(([key, value]) => {
+      encodedBody.set(encodeURIComponent(key), encodeURIComponent(value));
+    });
   }
 
   requestInit.headers && (requestInit.headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8');
-  if (!/get/i.test(requestInit.method)) requestInit.body = encodedBody;
-
+  if (!/GET/i.test(requestInit.method)) requestInit.body = encodedBody;
   return fetch(uri, requestInit);
 }
 
-async function requestJson(uri: string, requestInit: RequestInit, body?: object): Promise<Response> {
+function requestJson(uri: string, requestInit: RequestInit, body?: object): Promise<Response> {
   requestInit.headers && (requestInit.headers['Content-Type'] = 'application/json');
   body && (requestInit.body = JSON.stringify(body));
-
   return fetch(uri, requestInit);
 }
 
-async function request<ResponseData = undefined>(
+function request<ResponseData = {}>(
   method: RestMethod,
   uri: string,
-  options: RequestOptions = {},
-): Promise<DataWithCancel<ResponseData>> {
+  options: RequestOptions = defaultRequestOptions,
+): ApiResult<ResponseData> {
   const abortController = new AbortController();
   const abortSignal = abortController.signal;
 
-  const { queryParams, body, files, headers } = options;
+  const lazyPromise: () => Promise<ResponseData> = () =>
+    new Promise<ResponseData>((resolve, reject) => {
+      const { queryParams, body, files, headers } = options;
 
-  const constructedUri = constructUriWithQueryParams(uri, queryParams);
+      const constructedUri = constructUriWithQueryParams(uri, queryParams);
 
-  const requestInitWithoutBody: RequestInit = {
-    headers: headers,
-    method: method,
-    signal: abortSignal,
-  };
+      const requestInitWithoutBody: RequestInit = {
+        headers: headers || defaultHeader,
+        method: method,
+        signal: abortSignal,
+      };
 
-  let res: Response;
+      let responsePromise: Promise<Response>;
 
-  if (headers?.['Content-Type'] === 'multipart/form-data' || (method === 'POST' && files)) {
-    res = await upload(constructedUri, requestInitWithoutBody, files, body);
-  } else if (
-    headers?.['Content-Type'] === 'application/x-www-form-urlencoded;charset=UTF-8' ||
-    body instanceof URLSearchParams
-  ) {
-    res = await requestFormUrlEncoded(constructedUri, requestInitWithoutBody, body);
-  } else {
-    res = await requestJson(uri, requestInitWithoutBody, body);
-  }
+      if (headers?.['Content-Type'] === 'multipart/form-data' || (method === 'POST' && files)) {
+        responsePromise = upload(constructedUri, requestInitWithoutBody, files, body);
+      } else if (
+        headers?.['Content-Type'] === 'application/x-www-form-urlencoded;charset=UTF-8' ||
+        body instanceof URLSearchParams
+      ) {
+        responsePromise = requestFormUrlEncoded(constructedUri, requestInitWithoutBody, body);
+      } else {
+        responsePromise = requestJson(constructedUri, requestInitWithoutBody, body);
+      }
 
-  const responseData = await res.json();
-  // @ts-ignore
-  return { ...convertObjectKeysCamelCaseFromSnakeCase(responseData), cancel: abortController.abort };
+      responsePromise
+        .then(
+          async (response: Response): Promise<void> => {
+            let responseData: ResponseData = {} as ResponseData;
+            try {
+              // TODO currently, only return response as json
+              const json = await response.json();
+              responseData = (convertObjectKeysCamelCaseFromSnakeCase(json) as unknown) as ResponseData;
+            } catch (e) {}
+            resolve(responseData);
+          },
+        )
+        .catch((e) => {
+          reject(e);
+        });
+    });
+
+  return [
+    lazyPromise,
+    (): void => {
+      abortController.abort();
+    },
+  ];
 }
 
 export default request;

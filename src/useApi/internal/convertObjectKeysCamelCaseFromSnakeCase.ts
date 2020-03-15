@@ -8,8 +8,9 @@ function isArray<T>(objOrArray: Candidate): objOrArray is any[] {
 }
 
 function convertObjectKeysCamelCaseFromSnakeCase(objOrArr: Candidate): Candidate {
+  if (!objOrArr) return {};
   if (isArray(objOrArr)) {
-    return (objOrArr).map(convertObjectKeysCamelCaseFromSnakeCase);
+    return objOrArr.map(convertObjectKeysCamelCaseFromSnakeCase);
   } else {
     const camelCaseObject: object = {};
 

@@ -26,3 +26,8 @@ it('same params should be merged with second argument data', () => {
 
   expect(constructUriWithQueryParams(uri, queryParams)).toBe('https://www.google.com/?name=mym0404');
 });
+
+it('invoke error should be same', () => {
+  const errorUri = 'kalj2lkdalkwd';
+  expect(constructUriWithQueryParams(errorUri)).toBe(errorUri);
+});

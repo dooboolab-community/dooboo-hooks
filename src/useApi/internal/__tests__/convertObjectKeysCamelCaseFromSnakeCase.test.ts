@@ -1,4 +1,4 @@
-import toCamelCase from '../convertObjectKeysCamelCaseFromSnakeCase'
+import toCamelCase from '../convertObjectKeysCamelCaseFromSnakeCase';
 
 describe('camelCase function test', (): void => {
   it('change object to camelCase in nested object', (): void => {
@@ -21,12 +21,11 @@ describe('camelCase function test', (): void => {
   });
 
   it('change object containing non-plain-object to camelCase', (): void => {
+    class Class {
+      constructor(public name: string, private birth: number) {}
 
-    class Class{
-      constructor(public name: string,private birth: number) {}
-
-      sayMyName(){
-        console.error('My name is '+ this.name);
+      sayMyName() {
+        console.error('My name is ' + this.name);
       }
     }
     const instance = new Class('mj', 1997);
@@ -34,7 +33,11 @@ describe('camelCase function test', (): void => {
     const obj = { a_b_c: instance };
 
     expect(toCamelCase(obj)).toEqual({
-      aBC: instance
+      aBC: instance,
     });
+  });
+
+  it('undefined should return empty object', () => {
+    expect(toCamelCase(undefined)).toEqual({});
   });
 });
