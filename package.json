@@ -6,8 +6,9 @@
   "types": "dist/index.d.ts",
   "postinstall": "dooboolab-welcome postinstall",
   "scripts": {
+    "check": "yarn lint && yarn tsc && yarn jest --coverage -u",
     "build": "tsc",
-    "lint": "eslint -c .eslintrc.js 'index.ts'",
+    "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
     "test": "jest",
     "test:typescript": "tsc --noEmit",
     "tsc:sync": "npx typesync",

@@ -1,15 +1,16 @@
+import { FetchMock } from 'jest-fetch-mock';
 import RestClient from '../RestAdapter';
-import { RestMethod } from '../internal/ApiClient';
 
-function mockSimpleResponseOnce(uri?: string | RegExp, body?: object) {
+declare const fetchMock: FetchMock;
+function mockSimpleResponseOnce(uri?: string | RegExp, body?: object): void {
   const simpleBody = body ? JSON.stringify(body) : JSON.stringify({ success: true });
 
   if (uri) {
-    fetchMock.mockIf(uri, async (req) => {
+    fetchMock.mockIf(uri, async () => {
       return { status: 200, body: simpleBody };
     });
   } else {
-    fetchMock.once(async (req) => {
+    fetchMock.once(async () => {
       return { status: 200, body: simpleBody };
     });
   }
@@ -23,7 +24,7 @@ describe('Call - ', () => {
 
   // For coverage
   it('[WHEN] unsubscribe [THEN] abort function of AbortController will be invoked', () => {
-    const [dataPromise, unsubscribe] = RestClient['GET']('');
+    const [dataPromise, unsubscribe] = RestClient.GET('');
     unsubscribe();
   });
 
@@ -31,7 +32,7 @@ describe('Call - ', () => {
     fetchMock.resetMocks();
     fetchMock.mockRejectOnce(new Error('Network Fail!'));
 
-    const [dataPromise, unsubscribe] = RestClient['GET']('');
+    const [dataPromise, unsubscribe] = RestClient.GET('');
 
     expect.assertions(2);
 
@@ -43,7 +44,23 @@ describe('Call - ', () => {
       });
   });
 
-  describe.each(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])('RestAdapter[%p] - ', (restMethod: RestMethod) => {
+  it('[GIVEN] Timeout [WHEN] request api [THEN] promise will be rejected', async (done) => {
+    fetchMock.resetMocks();
+    fetchMock.once(async (req) => {
+      await new Promise((resolve, reject) => setTimeout(resolve, 5400));
+      return { status: 200 };
+    });
+
+    const [dataPromise, unsubscribe] = RestClient.GET('');
+
+    try {
+      await dataPromise();
+    } catch (e) {
+      done();
+    }
+  }, 10000);
+
+  describe.each(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])('RestAdapter[%p] - ', (restMethod): void => {
     it('[GIVEN] application/json [THEN] should be success', async () => {
       const [dataPromise, unsubscribe] = RestClient[restMethod]<{ success: boolean }>('');
       const { success } = await dataPromise();

@@ -18,20 +18,26 @@ function isDirtyDependencies(dep1: any[] | undefined, dep2: any[] | undefined): 
 }
 
 type UseApi<ResponseData> = {
+  success: boolean;
   loading: boolean;
   error: Error | null;
   unsubscribe: (() => void) | null;
-  call: () => Promise<ResponseData>;
+  call: () => void;
 } & {
   [P in keyof ResponseData]?: ResponseData[P];
 };
-const useApi = <ResponseData>(api: ApiResult<ResponseData>, dependencies = [], cold = false): UseApi<ResponseData> => {
+const useApi = <ResponseData>(
+  api: ApiResult<ResponseData>,
+  dependencies: any[] = [],
+  cold = false,
+): UseApi<ResponseData> => {
+  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<ResponseData | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
   const [unsubscribe, setUnsubscribe] = useState<Unsubscribe | null>(null);
-  const [call, setCall] = useState<(() => Promise<ResponseData>) | null>(null);
+  const [call, setCall] = useState<(() => void) | null>(null);
 
   const previousDependencies = useRef<any[]>();
 
@@ -42,18 +48,29 @@ const useApi = <ResponseData>(api: ApiResult<ResponseData>, dependencies = [], c
       const callApi = async (): Promise<void> => {
         const [call, cancel] = api;
 
-        setCall(() => (): Promise<ResponseData> => {
-          return call();
-        });
-
         setUnsubscribe(() => (): void => {
           cancel();
         });
 
-        if (!cold) {
+        if (cold) {
+          setCall(() => async (): Promise<void> => {
+            try {
+              setSuccess(false);
+              setLoading(true);
+              setData(await call());
+              setSuccess(true);
+            } catch (e) {
+              setError(e);
+            } finally {
+              setLoading(false);
+            }
+          });
+        } else {
           try {
+            setSuccess(false);
             setLoading(true);
             setData(await call());
+            setSuccess(true);
           } catch (e) {
             setError(e);
           } finally {
@@ -65,12 +82,11 @@ const useApi = <ResponseData>(api: ApiResult<ResponseData>, dependencies = [], c
       callApi().then();
     }
     return (): void => {
-      // eslint-disable-next-line no-unused-expressions
-      unsubscribe?.();
+      unsubscribe && unsubscribe();
     };
   }, [unsubscribe, api, cold, dependencies, previousDependencies]);
 
-  return { ...data, error, loading, unsubscribe, call } as UseApi<ResponseData>;
+  return { ...data, error, success, loading, unsubscribe, call } as UseApi<ResponseData>;
 };
 
 export default useApi;

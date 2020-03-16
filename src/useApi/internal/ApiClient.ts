@@ -3,8 +3,8 @@ import 'abortcontroller-polyfill';
 import { constructUriWithQueryParams } from './constructUriWithQueryParams';
 import convertObjectKeysCamelCaseFromSnakeCase from './convertObjectKeysCamelCaseFromSnakeCase';
 
-declare const window;
-const AbortController = window.AbortController;
+declare const global;
+const AbortController = global.AbortController;
 
 export type RestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type Header = { [P in string]: string } & {
@@ -35,9 +35,8 @@ export type RequestOptions = {
 };
 
 export type Unsubscribe = () => void;
-export type ApiResult<ResponseData> = [() => Promise<ResponseData>, Unsubscribe];
+export type ApiResult<ResponseData = any> = [() => Promise<ResponseData>, Unsubscribe];
 
-const defaultMethod: RestMethod = 'GET';
 const defaultHeader: Header = {
   'Content-Type': 'application/json',
   Accept: 'application/json',
@@ -45,6 +44,18 @@ const defaultHeader: Header = {
 const defaultRequestOptions: RequestOptions = {
   headers: defaultHeader,
 };
+
+const defaultTimeout = 5000; /* ms */
+function withTimeout<T>(ms, promise: Promise<T>): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise((resolve, reject) =>
+      setTimeout(() => {
+        reject(new Error('Timeout Error'));
+      }, ms),
+    ),
+  ]) as Promise<T>;
+}
 
 /**
  * The method for uploading files to api server.
@@ -93,7 +104,7 @@ function requestFormUrlEncoded(
   }
 
   requestInit.headers && (requestInit.headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8');
-  if (!/GET/i.test(requestInit.method)) requestInit.body = encodedBody;
+  if (!/GET/i.test(requestInit.method!)) requestInit.body = encodedBody;
   return fetch(uri, requestInit);
 }
 
@@ -112,46 +123,49 @@ function request<ResponseData = {}>(
   const abortSignal = abortController.signal;
 
   const lazyPromise: () => Promise<ResponseData> = () =>
-    new Promise<ResponseData>((resolve, reject) => {
-      const { queryParams, body, files, headers } = options;
+    withTimeout(
+      defaultTimeout,
+      new Promise<ResponseData>((resolve, reject) => {
+        const { queryParams, body, files, headers } = options;
 
-      const constructedUri = constructUriWithQueryParams(uri, queryParams);
+        const constructedUri = constructUriWithQueryParams(uri, queryParams);
 
-      const requestInitWithoutBody: RequestInit = {
-        headers: headers || defaultHeader,
-        method: method,
-        signal: abortSignal,
-      };
+        const requestInitWithoutBody: RequestInit = {
+          headers: headers || defaultHeader,
+          method: method,
+          signal: abortSignal,
+        };
 
-      let responsePromise: Promise<Response>;
+        let responsePromise: Promise<Response>;
 
-      if (headers?.['Content-Type'] === 'multipart/form-data' || (method === 'POST' && files)) {
-        responsePromise = upload(constructedUri, requestInitWithoutBody, files, body);
-      } else if (
-        headers?.['Content-Type'] === 'application/x-www-form-urlencoded;charset=UTF-8' ||
-        body instanceof URLSearchParams
-      ) {
-        responsePromise = requestFormUrlEncoded(constructedUri, requestInitWithoutBody, body);
-      } else {
-        responsePromise = requestJson(constructedUri, requestInitWithoutBody, body);
-      }
+        if (headers?.['Content-Type'] === 'multipart/form-data' || (method === 'POST' && files)) {
+          responsePromise = upload(constructedUri, requestInitWithoutBody, files, body);
+        } else if (
+          headers?.['Content-Type'] === 'application/x-www-form-urlencoded;charset=UTF-8' ||
+          body instanceof URLSearchParams
+        ) {
+          responsePromise = requestFormUrlEncoded(constructedUri, requestInitWithoutBody, body);
+        } else {
+          responsePromise = requestJson(constructedUri, requestInitWithoutBody, body);
+        }
 
-      responsePromise
-        .then(
-          async (response: Response): Promise<void> => {
-            let responseData: ResponseData = {} as ResponseData;
-            try {
-              // TODO currently, only return response as json
-              const json = await response.json();
-              responseData = (convertObjectKeysCamelCaseFromSnakeCase(json) as unknown) as ResponseData;
-            } catch (e) {}
-            resolve(responseData);
-          },
-        )
-        .catch((e) => {
-          reject(e);
-        });
-    });
+        responsePromise
+          .then(
+            async (response: Response): Promise<void> => {
+              let responseData: ResponseData = {} as ResponseData;
+              try {
+                // TODO currently, only return response as json
+                const json = await response.json();
+                responseData = (convertObjectKeysCamelCaseFromSnakeCase(json) as unknown) as ResponseData;
+              } catch (e) {}
+              resolve(responseData);
+            },
+          )
+          .catch((e) => {
+            reject(e);
+          });
+      }),
+    );
 
   return [
     lazyPromise,
