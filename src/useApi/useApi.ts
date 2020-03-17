@@ -86,7 +86,7 @@ const useApi = <ResponseData>(
     };
   }, [unsubscribe, api, cold, dependencies, previousDependencies]);
 
-  return { ...data, error, success, loading, unsubscribe, call } as UseApi<ResponseData>;
+  return { ...data, error, success, loading, unsubscribe, call };
 };
 
 export default useApi;
