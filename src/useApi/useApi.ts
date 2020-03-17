@@ -1,5 +1,7 @@
-import { ApiResult, Unsubscribe } from './internal/ApiClient';
-import { useEffect, useRef, useState } from 'react';
+import { ApiResult, Call, Unsubscribe } from './internal/ApiClient';
+import { useEffect, useReducer, useRef, useState } from 'react';
+
+import { JSONCandidate } from './internal/convertObjectKeysCamelCaseFromSnakeCase';
 
 function isDirtyDependencies(dep1: any[] | undefined, dep2: any[] | undefined): boolean {
   if (!dep1 || !dep2) return true;
@@ -17,7 +19,7 @@ function isDirtyDependencies(dep1: any[] | undefined, dep2: any[] | undefined): 
   return false;
 }
 
-type UseApi<ResponseData> = {
+type State<ResponseData = JSONCandidate> = {
   success: boolean;
   loading: boolean;
   error: Error | null;
@@ -26,18 +28,80 @@ type UseApi<ResponseData> = {
 } & {
   [P in keyof ResponseData]?: ResponseData[P];
 };
+
+type ActionTypes = 'SetUnsubscribe' | 'SetCall' | 'CallStart' | 'CallSuccess' | 'CallFail';
+type Action<Payload = any> = { type: ActionTypes; payload?: Payload };
+type ActionCreator<Payload = undefined> = (...args) => Action<Payload>;
+
+const reducer = <ResponseData>(state: State<ResponseData>, { type, payload }: Action): State<ResponseData> => {
+  switch (type) {
+    case 'SetUnsubscribe':
+      return { ...state, unsubscribe: payload };
+    case 'SetCall':
+      return { ...state, call: payload };
+    case 'CallStart':
+      return {
+        ...state,
+        error: null,
+        loading: true,
+        success: false,
+      };
+    case 'CallSuccess':
+      return {
+        ...state,
+        error: null,
+        loading: false,
+        success: true,
+        ...(payload as object),
+      };
+    case 'CallFail':
+      return {
+        ...state,
+        error: payload,
+        loading: false,
+        success: false,
+      };
+  }
+  return state;
+};
+
+const setUnsubscribe1: ActionCreator<Unsubscribe> = (unsubscribe: Unsubscribe) => ({
+  type: 'SetUnsubscribe',
+  payload: unsubscribe,
+});
+const setCall1: ActionCreator<Call> = (call: Call) => ({
+  type: 'SetCall',
+  payload: call,
+});
+const callStart1: ActionCreator = () => ({
+  type: 'CallStart',
+});
+const callSuccess1: ActionCreator<JSONCandidate> = (data: JSONCandidate) => ({
+  type: 'CallSuccess',
+  payload: data,
+});
+const callFail1: ActionCreator<Error> = (error: Error) => ({
+  type: 'CallFail',
+  payload: error,
+});
+
+const initialState: State = {
+  call: null,
+  error: null,
+  loading: false,
+  success: false,
+  unsubscribe: undefined,
+};
+
 const useApi = <ResponseData>(
   api: ApiResult<ResponseData>,
   dependencies: any[] = [],
   cold = false,
-): UseApi<ResponseData> => {
-  const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<ResponseData | null>(null);
-  const [error, setError] = useState<Error | null>(null);
-
-  const [unsubscribe, setUnsubscribe] = useState<Unsubscribe | null>(null);
-  const [call, setCall] = useState<(() => void) | null>(null);
+): State<ResponseData> => {
+  const [state, dispatch] = useReducer<(prevState: State<ResponseData>, action: Action) => State<ResponseData>>(
+    reducer,
+    initialState,
+  );
 
   const previousDependencies = useRef<any[]>();
 
@@ -48,33 +112,31 @@ const useApi = <ResponseData>(
       const callApi = async (): Promise<void> => {
         const [call, cancel] = api;
 
-        setUnsubscribe(() => (): void => {
-          cancel();
-        });
+        dispatch(
+          setUnsubscribe1(() => (): void => {
+            cancel();
+          }),
+        );
 
         if (cold) {
-          setCall(() => async (): Promise<void> => {
-            try {
-              setSuccess(false);
-              setLoading(true);
-              setData(await call());
-              setLoading(false);
-              setSuccess(true);
-            } catch (e) {
-              setLoading(false);
-              setError(e);
-            }
-          });
+          dispatch(
+            setCall1(() => async (): Promise<void> => {
+              try {
+                dispatch(callStart1());
+                const data = await call();
+                dispatch(callSuccess1(data));
+              } catch (e) {
+                dispatch(callFail1(e));
+              }
+            }),
+          );
         } else {
           try {
-            setSuccess(false);
-            setLoading(true);
-            setData(await call());
-            setLoading(false);
-            setSuccess(true);
+            dispatch(callStart1());
+            const data = await call();
+            dispatch(callSuccess1(data));
           } catch (e) {
-            setLoading(false);
-            setError(e);
+            dispatch(callFail1(e));
           }
         }
       };
@@ -82,11 +144,11 @@ const useApi = <ResponseData>(
       callApi().then();
     }
     return (): void => {
-      unsubscribe && unsubscribe();
+      state.unsubscribe && state.unsubscribe();
     };
-  }, [unsubscribe, api, cold, dependencies, previousDependencies]);
+  }, [api, cold, dependencies, state]);
 
-  return { ...data, error, success, loading, unsubscribe, call };
+  return { ...state };
 };
 
 export default useApi;

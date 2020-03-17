@@ -34,8 +34,10 @@ export type RequestOptions = {
   headers?: Header;
 };
 
+export type Call = () => void;
+export type CallPromise<ResponseData> = () => Promise<ResponseData>;
 export type Unsubscribe = () => void;
-export type ApiResult<ResponseData = any> = [() => Promise<ResponseData>, Unsubscribe];
+export type ApiResult<ResponseData = {}> = [CallPromise<ResponseData>, Unsubscribe];
 
 const defaultHeader: Header = {
   'Content-Type': 'application/json',
@@ -122,7 +124,7 @@ function request<ResponseData = {}>(
   const abortController = new AbortController();
   const abortSignal = abortController.signal;
 
-  const lazyPromise: () => Promise<ResponseData> = () =>
+  const callPromise: CallPromise<ResponseData> = () =>
     withTimeout(
       defaultTimeout,
       new Promise<ResponseData>((resolve, reject) => {
@@ -168,7 +170,7 @@ function request<ResponseData = {}>(
     );
 
   return [
-    lazyPromise,
+    callPromise,
     (): void => {
       abortController.abort();
     },

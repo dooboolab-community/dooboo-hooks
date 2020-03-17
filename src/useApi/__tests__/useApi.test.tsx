@@ -20,7 +20,7 @@ describe('useApi', () => {
   });
 
   it('render success', async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useApi(apiResult));
+    const { result, waitForNextUpdate } = renderHook(() => useApi(apiResult, [], true));
     await waitForNextUpdate();
     expect(result.current).toBeTruthy();
   });
@@ -31,7 +31,8 @@ describe('useApi', () => {
         current: { name, age, call, error, loading, success, unsubscribe },
       },
       waitForNextUpdate,
-    } = renderHook(() => useApi(apiResult));
+      waitForValueToChange,
+    } = renderHook(() => useApi(apiResult, []));
 
     expect(name).toBeUndefined();
     expect(age).toBeUndefined();
@@ -42,8 +43,11 @@ describe('useApi', () => {
     expect(success).toBe(false);
     expect(unsubscribe).toBeTruthy();
 
-    await waitForNextUpdate();
-
+    while (true) {
+      console.log(name, age, call, error, loading, success, unsubscribe);
+      await waitForNextUpdate();
+      console.log(name, age, call, error, loading, success, unsubscribe);
+    }
 
     expect(name).toBe('dooboo');
     expect(age).toBe(24);
