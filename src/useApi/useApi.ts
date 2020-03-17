@@ -34,6 +34,7 @@ type Action<Payload = any> = { type: ActionTypes; payload?: Payload };
 type ActionCreator<Payload = undefined> = (...args) => Action<Payload>;
 
 const reducer = <ResponseData>(state: State<ResponseData>, { type, payload }: Action): State<ResponseData> => {
+  console.log(`🌈 useApi - ${type}`);
   switch (type) {
     case 'SetUnsubscribe':
       return { ...state, unsubscribe: payload };
@@ -65,22 +66,22 @@ const reducer = <ResponseData>(state: State<ResponseData>, { type, payload }: Ac
   return state;
 };
 
-const setUnsubscribe1: ActionCreator<Unsubscribe> = (unsubscribe: Unsubscribe) => ({
+const setUnsubscribe: ActionCreator<Unsubscribe> = (unsubscribe: Unsubscribe) => ({
   type: 'SetUnsubscribe',
   payload: unsubscribe,
 });
-const setCall1: ActionCreator<Call> = (call: Call) => ({
+const setCall: ActionCreator<Call> = (call: Call) => ({
   type: 'SetCall',
   payload: call,
 });
-const callStart1: ActionCreator = () => ({
+const callStart: ActionCreator = () => ({
   type: 'CallStart',
 });
-const callSuccess1: ActionCreator<JSONCandidate> = (data: JSONCandidate) => ({
+const callSuccess: ActionCreator<JSONCandidate> = (data: JSONCandidate) => ({
   type: 'CallSuccess',
   payload: data,
 });
-const callFail1: ActionCreator<Error> = (error: Error) => ({
+const callFail: ActionCreator<Error> = (error: Error) => ({
   type: 'CallFail',
   payload: error,
 });
@@ -113,30 +114,32 @@ const useApi = <ResponseData>(
         const [call, cancel] = api;
 
         dispatch(
-          setUnsubscribe1(() => (): void => {
+          setUnsubscribe(() => (): void => {
             cancel();
           }),
         );
 
         if (cold) {
           dispatch(
-            setCall1(() => async (): Promise<void> => {
-              try {
-                dispatch(callStart1());
-                const data = await call();
-                dispatch(callSuccess1(data));
-              } catch (e) {
-                dispatch(callFail1(e));
-              }
-            }),
+            setCall(
+              async (): Promise<void> => {
+                try {
+                  dispatch(callStart());
+                  const data = await call();
+                  dispatch(callSuccess(data));
+                } catch (e) {
+                  dispatch(callFail(e));
+                }
+              },
+            ),
           );
         } else {
           try {
-            dispatch(callStart1());
+            dispatch(callStart());
             const data = await call();
-            dispatch(callSuccess1(data));
+            dispatch(callSuccess(data));
           } catch (e) {
-            dispatch(callFail1(e));
+            dispatch(callFail(e));
           }
         }
       };

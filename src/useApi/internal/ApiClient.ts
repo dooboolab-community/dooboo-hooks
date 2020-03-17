@@ -143,6 +143,9 @@ function request<ResponseData = {}>(
 
         let responsePromise: Promise<Response>;
 
+        // TODO remove console
+        console.log(`🌈[${method}] - [${constructedUri}] - ${JSON.stringify(body, null, 2)}`);
+
         if (headers?.['Content-Type'] === 'multipart/form-data' || (method === 'POST' && files)) {
           responsePromise = upload(constructedUri, requestInitWithoutBody, files, body);
         } else if (
@@ -161,12 +164,16 @@ function request<ResponseData = {}>(
               try {
                 // TODO currently, only return response as json
                 const json = await response.json();
+                // TODO remove console
+                console.log(`🌈Api Response Body - ${JSON.stringify(json, null, 2)}`);
                 responseData = (convertObjectKeysCamelCaseFromSnakeCase(json) as unknown) as ResponseData;
               } catch (e) {}
               resolve(responseData);
             },
           )
           .catch((e) => {
+            // TODO remove console
+            console.warn(e);
             reject(e);
           });
       }),
