@@ -1,5 +1,5 @@
 import { ApiResult, Call, Unsubscribe } from './internal/ApiClient';
-import { useEffect, useReducer, useRef, useState } from 'react';
+import { useEffect, useReducer, useRef } from 'react';
 
 import { JSONCandidate } from './internal/convertObjectKeysCamelCaseFromSnakeCase';
 
@@ -24,7 +24,7 @@ type State<ResponseData = JSONCandidate> = {
   loading: boolean;
   error: Error | null;
   unsubscribe: (() => void) | null;
-  call: () => void;
+  call: (() => void) | null;
 } & {
   [P in keyof ResponseData]?: ResponseData[P];
 };
@@ -90,7 +90,7 @@ const initialState: State = {
   error: null,
   loading: false,
   success: false,
-  unsubscribe: undefined,
+  unsubscribe: null,
 };
 
 const useApi = <ResponseData>(
@@ -100,7 +100,7 @@ const useApi = <ResponseData>(
 ): State<ResponseData> => {
   const [state, dispatch] = useReducer<(prevState: State<ResponseData>, action: Action) => State<ResponseData>>(
     reducer,
-    initialState,
+  initialState,
   );
 
   const previousDependencies = useRef<any[]>();

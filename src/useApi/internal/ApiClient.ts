@@ -39,15 +39,6 @@ export type CallPromise<ResponseData> = () => Promise<ResponseData>;
 export type Unsubscribe = () => void;
 export type ApiResult<ResponseData = {}> = [CallPromise<ResponseData>, Unsubscribe];
 
-const defaultHeader: Header = {
-  'Content-Type': 'application/json',
-  Accept: 'application/json',
-};
-const defaultRequestOptions: RequestOptions = {
-  headers: defaultHeader,
-};
-
-const defaultTimeout = 5000; /* ms */
 function withTimeout<T>(ms, promise: Promise<T>): Promise<T> {
   return Promise.race([
     promise,
@@ -57,6 +48,18 @@ function withTimeout<T>(ms, promise: Promise<T>): Promise<T> {
       }, ms),
     ),
   ]) as Promise<T>;
+}
+
+let defaultOptions: { headers: Header; baseUrl: string; timeout: number } = {
+  headers: {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  },
+  baseUrl: '',
+  timeout: 5000,
+};
+export function setDefaultOptions(options: Partial<typeof defaultOptions>): void {
+  defaultOptions = { ...defaultOptions, ...options };
 }
 
 /**
@@ -119,21 +122,21 @@ function requestJson(uri: string, requestInit: RequestInit, body?: object): Prom
 function request<ResponseData = {}>(
   method: RestMethod,
   uri: string,
-  options: RequestOptions = defaultRequestOptions,
+  options: RequestOptions = { headers: defaultOptions.headers },
 ): ApiResult<ResponseData> {
   const abortController = new AbortController();
   const abortSignal = abortController.signal;
 
   const callPromise: CallPromise<ResponseData> = () =>
     withTimeout(
-      defaultTimeout,
+      defaultOptions.timeout,
       new Promise<ResponseData>((resolve, reject) => {
         const { queryParams, body, files, headers } = options;
 
-        const constructedUri = constructUriWithQueryParams(uri, queryParams);
+        const constructedUri = defaultOptions.baseUrl + constructUriWithQueryParams(uri, queryParams);
 
         const requestInitWithoutBody: RequestInit = {
-          headers: headers || defaultHeader,
+          headers: headers || defaultOptions.headers,
           method: method,
           signal: abortSignal,
         };
