@@ -58,11 +58,11 @@ const useApi = <ResponseData>(
               setSuccess(false);
               setLoading(true);
               setData(await call());
+              setLoading(false);
               setSuccess(true);
             } catch (e) {
-              setError(e);
-            } finally {
               setLoading(false);
+              setError(e);
             }
           });
         } else {
@@ -70,11 +70,11 @@ const useApi = <ResponseData>(
             setSuccess(false);
             setLoading(true);
             setData(await call());
+            setLoading(false);
             setSuccess(true);
           } catch (e) {
-            setError(e);
-          } finally {
             setLoading(false);
+            setError(e);
           }
         }
       };

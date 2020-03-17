@@ -44,6 +44,7 @@ describe('useApi', () => {
 
     await waitForNextUpdate();
 
+
     expect(name).toBe('dooboo');
     expect(age).toBe(24);
   });
