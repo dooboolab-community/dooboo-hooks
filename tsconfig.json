@@ -9,7 +9,7 @@
     "module": "es2015",
     "moduleResolution": "node",
     "target": "es5",
-    "noEmit": true,
+    "noEmit": false,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "declaration": true,
