@@ -1,3 +1,5 @@
+import { URL } from 'url';
+
 export function constructUriWithQueryParams(uri: string, queryParams?: object, baseUrl = ''): string {
   try {
     const url: URL = new URL(baseUrl + uri);
@@ -10,11 +12,11 @@ export function constructUriWithQueryParams(uri: string, queryParams?: object, b
         params.append(key, value + '');
       });
 
-    for (const [key, value] of paramsFromUri) {
+    paramsFromUri.forEach((value, key) => {
       if (!params.has(key)) {
         params.set(key, value);
       }
-    }
+    });
 
     const questionMarkIndex = uri.indexOf('?');
     if (questionMarkIndex !== -1) {
