@@ -1,12 +1,14 @@
 import { clearApiDefaultSettings, setApiDefaultSettings } from '..';
 
 import { FetchMock } from 'jest-fetch-mock';
+import { ResponseDataInterceptorAddOn } from '../internal/ApiClient';
 import RestClient from '../RestAdapter';
 
 jest.useRealTimers();
 
 declare const fetchMock: FetchMock;
 function mockSimpleResponseOnce(uri?: string | RegExp, body?: object): void {
+  fetchMock.resetMocks();
   const simpleBody = body ? JSON.stringify(body) : JSON.stringify({ success: true });
 
   if (uri) {
@@ -100,21 +102,27 @@ describe('Call - ', () => {
     unsubscribe();
   });
 
-  it('[GIVEN] Network Error [WHEN] request api [THEN] promise will be rejected', () => {
-    fetchMock.resetMocks();
-    fetchMock.mockRejectOnce(new Error('Network Fail!'));
+  it.each([true, false])(
+    'logging : %p - [GIVEN] Network Error [WHEN] request api [THEN] promise will be rejected',
+    (logging) => {
+      setApiDefaultSettings({ logging });
+      fetchMock.resetMocks();
+      fetchMock.mockRejectOnce(new Error('Network Fail!'));
 
-    const [dataPromise] = RestClient.GET('');
+      const [dataPromise] = RestClient.GET('');
 
-    expect.assertions(2);
+      expect.assertions(2);
 
-    return dataPromise()
-      .then()
-      .catch((e) => {
-        expect(e.name).toBe('Error');
-        expect(e.message).toBe('Network Fail!');
-      });
-  });
+      return dataPromise()
+        .then(() => {
+          clearApiDefaultSettings();
+        })
+        .catch((e) => {
+          expect(e.name).toBe('Error');
+          expect(e.message).toBe('Network Fail!');
+        });
+    },
+  );
 
   it('[GIVEN] Timeout [WHEN] request api [THEN] promise will be rejected', async (done) => {
     fetchMock.resetMocks();
@@ -138,10 +146,28 @@ describe('Call - ', () => {
     await dataPromise();
     clearApiDefaultSettings();
   });
+
   it('[GIVEN] responseInterceptor is a Promise [THEN] call success', async () => {
     setApiDefaultSettings({ responseInterceptor: (response) => Promise.resolve(response) });
     const [dataPromise] = RestClient.GET('');
     await dataPromise();
+    clearApiDefaultSettings();
+  });
+
+  it('[GIVEN] with logging [THEN] call success', async () => {
+    setApiDefaultSettings({ logging: true });
+    const [dataPromise] = RestClient.GET('');
+    await dataPromise();
+    clearApiDefaultSettings();
+  });
+
+  it('[GIVEN] with CAMELCASE response interceptor addon [WHEN] response is snake_case [THEN] response data is camelCase', async () => {
+    setApiDefaultSettings({ responseInterceptorAddons: [ResponseDataInterceptorAddOn.CAMELCASE] });
+    fetchMock.resetMocks();
+    mockSimpleResponseOnce(null, { my_name: 'mj' });
+    const [dataPromise] = RestClient.GET<{ myName: string }>('');
+    const data = await dataPromise();
+    expect(data.myName).toBe('mj');
     clearApiDefaultSettings();
   });
 

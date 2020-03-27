@@ -57,7 +57,12 @@ type RequestOptionsInterceptor = (
   url: string,
   method: RestMethod,
 ) => RequestOptions | Promise<RequestOptions>;
-type ResponseDataInterceptorAddOn = 'CAMELCASE';
+type ResponseDataInterceptorAddOnNames = 'CAMELCASE';
+export const ResponseDataInterceptorAddOn: { [P in ResponseDataInterceptorAddOnNames]: ResponseDataInterceptor<{}> } = {
+  CAMELCASE: (response) => {
+    return convertObjectKeysCamelCaseFromSnakeCase(response);
+  },
+};
 type ResponseDataInterceptor<ResponseData extends JSONCandidate> = (
   responseData: ResponseData,
 ) => ResponseData | Promise<ResponseData>;
@@ -67,7 +72,7 @@ type Settings<ResponseData extends JSONCandidate> = {
   timeout: number;
   requestInterceptor: RequestOptionsInterceptor;
   responseInterceptor: ResponseDataInterceptor<ResponseData>;
-  responseInterceptorAddons: ResponseDataInterceptorAddOn[];
+  responseInterceptorAddons: ResponseDataInterceptor<ResponseData>[];
   responseCodeWhiteListRange: { minInclude: number; maxExclude: number };
   responseCodeWhiteList: number[];
   responseCodeBlackList: number[];
@@ -241,10 +246,11 @@ function request<ResponseData = {}>(
                 }
 
                 responseData = json as ResponseData;
+
                 // AddOns
-                if (defaultSettings.responseInterceptorAddons.includes('CAMELCASE')) {
-                  responseData = (convertObjectKeysCamelCaseFromSnakeCase(json) as unknown) as ResponseData;
-                }
+                defaultSettings.responseInterceptorAddons.forEach((addOn) => {
+                  responseData = addOn(responseData) as ResponseData;
+                });
               } catch (e) {
                 // Ignore empty body parsing or not json body
               } finally {
