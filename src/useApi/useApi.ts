@@ -34,7 +34,6 @@ type Action<Payload = any> = { type: ActionTypes; payload?: Payload };
 type ActionCreator<Payload = undefined> = (...args) => Action<Payload>;
 
 const reducer = <ResponseData>(state: State<ResponseData>, { type, payload }: Action): State<ResponseData> => {
-  console.log(`🌈 useApi - ${type}`);
   switch (type) {
     case 'SetUnsubscribe':
       return { ...state, unsubscribe: payload };
@@ -101,7 +100,7 @@ const useApi = <ResponseData>(
 ): State<ResponseData> => {
   const [state, dispatch] = useReducer<(prevState: State<ResponseData>, action: Action) => State<ResponseData>>(
     reducer,
-  initialState,
+    initialState,
   );
 
   const previousDependencies = useRef<any[]>();

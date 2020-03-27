@@ -1,5 +1,5 @@
-import { URL } from 'url';
 import { constructUriWithQueryParams } from '../constructUriWithQueryParams';
+
 
 it('without params should be same', () => {
   const uri = 'https://www.google.com/';

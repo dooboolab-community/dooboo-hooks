@@ -1,6 +1,8 @@
 import { FetchMock } from 'jest-fetch-mock';
 import RestClient from '../RestAdapter';
 
+jest.useRealTimers();
+
 declare const fetchMock: FetchMock;
 function mockSimpleResponseOnce(uri?: string | RegExp, body?: object): void {
   const simpleBody = body ? JSON.stringify(body) : JSON.stringify({ success: true });

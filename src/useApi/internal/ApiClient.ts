@@ -50,7 +50,8 @@ function withTimeout<T>(ms, promise: Promise<T>): Promise<T> {
   ]) as Promise<T>;
 }
 
-let defaultOptions: { headers: Header; baseUrl: string; timeout: number } = {
+type Options = { headers: Header; baseUrl: string; timeout: number };
+let defaultOptions: Options = {
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -109,6 +110,7 @@ function requestFormUrlEncoded(
   }
 
   requestInit.headers && (requestInit.headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8');
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   if (!/GET/i.test(requestInit.method!)) requestInit.body = encodedBody;
   return fetch(uri, requestInit);
 }
@@ -133,7 +135,7 @@ function request<ResponseData = {}>(
       new Promise<ResponseData>((resolve, reject) => {
         const { queryParams, body, files, headers } = options;
 
-        const constructedUri = defaultOptions.baseUrl + constructUriWithQueryParams(uri, queryParams);
+        const constructedUri = constructUriWithQueryParams(uri, queryParams, defaultOptions.baseUrl);
 
         const requestInitWithoutBody: RequestInit = {
           headers: headers || defaultOptions.headers,
@@ -167,7 +169,11 @@ function request<ResponseData = {}>(
                 // TODO remove console
                 console.log(`🌈Api Response Body - ${JSON.stringify(json, null, 2)}`);
                 responseData = (convertObjectKeysCamelCaseFromSnakeCase(json) as unknown) as ResponseData;
-              } catch (e) {}
+              } catch (e) {
+                // TODO remove console
+                console.log(`🌈Api Response Body JSON parse Fail - ${e}`);
+                reject(e);
+              }
               resolve(responseData);
             },
           )

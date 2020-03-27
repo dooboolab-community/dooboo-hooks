@@ -1,31 +1,30 @@
-import { URL } from 'url';
-
-export function constructUriWithQueryParams(uri: string, queryParams?: object): string {
+export function constructUriWithQueryParams(uri: string, queryParams?: object, baseUrl = ''): string {
   try {
-    const url: URL = new URL(uri);
-    const paramsFromUri = new URLSearchParams(url.searchParams);
+    const url: URL = new URL(baseUrl + uri);
+
+    const paramsFromUri = url.searchParams;
     const params = new URLSearchParams();
 
     queryParams &&
-    Object.entries(queryParams).forEach(([key, value]) => {
-      params.append(key, value + '');
-    });
+      Object.entries(queryParams).forEach(([key, value]) => {
+        params.append(key, value + '');
+      });
 
-    paramsFromUri.forEach((value, key) => {
+    for (const [key, value] of paramsFromUri) {
       if (!params.has(key)) {
         params.set(key, value);
       }
-    });
+    }
 
     const questionMarkIndex = uri.indexOf('?');
     if (questionMarkIndex !== -1) {
       uri = uri.substring(0, questionMarkIndex);
     }
 
-    if (params.keys().next().done === true) {
-      return encodeURI(uri);
+    if (params[Symbol.iterator]().next().done) {
+      return encodeURI(baseUrl + uri);
     } else {
-      return encodeURI(uri + '?' + params.toString());
+      return encodeURI(baseUrl + uri + '?' + params.toString());
     }
   } catch (e) {
     return uri;
