@@ -207,12 +207,12 @@ function request<ResponseData = {}>(
 
                 responseData = (convertObjectKeysCamelCaseFromSnakeCase(json) as unknown) as ResponseData;
               } catch (e) {
-                // TODO remove console
-                console.log(`🌈Api Response Body JSON parse Fail - ${e}`);
-                reject(e);
+                // Ignore empty body parsing or not json body
+                // console.log(`🌈Api Response Body JSON parse Fail - ${e}`);
+                // reject(e);
+              } finally {
+                resolve(responseData);
               }
-
-              resolve(responseData);
             } catch (e) {
               // TODO remove console
               console.warn(e);
