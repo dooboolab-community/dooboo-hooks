@@ -1,7 +1,7 @@
 import { clearApiDefaultSettings, setApiDefaultSettings } from '..';
 
 import { FetchMock } from 'jest-fetch-mock';
-import { ResponseDataInterceptorAddOn } from '../internal/ApiClient';
+import { ResponseInterceptorAddOn } from '../internal/ApiClient';
 import RestClient from '../RestAdapter';
 
 jest.useRealTimers();
@@ -162,7 +162,7 @@ describe('Call - ', () => {
   });
 
   it('[GIVEN] with CAMELCASE response interceptor addon [WHEN] response is snake_case [THEN] response data is camelCase', async () => {
-    setApiDefaultSettings({ responseInterceptorAddons: [ResponseDataInterceptorAddOn.CAMELCASE] });
+    setApiDefaultSettings({ responseInterceptorAddons: [ResponseInterceptorAddOn.CAMELCASE] });
     fetchMock.resetMocks();
     mockSimpleResponseOnce(null, { my_name: 'mj' });
     const [dataPromise] = RestClient.GET<{ myName: string }>('');

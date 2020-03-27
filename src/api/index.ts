@@ -9,5 +9,9 @@ export {
   RequestOptions,
   ContentType,
   Header,
+  ResponseInterceptorAddOn,
+  RequestOptionsInterceptor,
+  ResponseDataInterceptor,
+  Settings,
 } from './internal/ApiClient';
 export { default as useApi } from './useApi';

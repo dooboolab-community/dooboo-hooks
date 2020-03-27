@@ -52,21 +52,21 @@ function withTimeout<T>(ms, promise: Promise<T>): Promise<T> {
   ]) as Promise<T>;
 }
 
-type RequestOptionsInterceptor = (
+export type RequestOptionsInterceptor = (
   request: RequestOptions,
   url: string,
   method: RestMethod,
 ) => RequestOptions | Promise<RequestOptions>;
 type ResponseDataInterceptorAddOnNames = 'CAMELCASE';
-export const ResponseDataInterceptorAddOn: { [P in ResponseDataInterceptorAddOnNames]: ResponseDataInterceptor<{}> } = {
+export const ResponseInterceptorAddOn: { [P in ResponseDataInterceptorAddOnNames]: ResponseDataInterceptor<{}> } = {
   CAMELCASE: (response) => {
     return convertObjectKeysCamelCaseFromSnakeCase(response);
   },
 };
-type ResponseDataInterceptor<ResponseData extends JSONCandidate> = (
+export type ResponseDataInterceptor<ResponseData extends JSONCandidate> = (
   responseData: ResponseData,
 ) => ResponseData | Promise<ResponseData>;
-type Settings<ResponseData extends JSONCandidate> = {
+export type Settings<ResponseData extends JSONCandidate> = {
   headers: Header;
   baseUrl: string;
   timeout: number;
