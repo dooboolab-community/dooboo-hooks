@@ -1,3 +1,3 @@
 export * from './RestAdapter';
 export * from './useApi';
-export { setDefaultOptions } from './internal/ApiClient';
+export { setApiDefaultSettings } from './internal/ApiClient';

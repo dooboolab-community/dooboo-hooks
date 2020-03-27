@@ -57,14 +57,14 @@ type RequestInterceptor = (
   method: RestMethod,
 ) => RequestOptions | Promise<RequestOptions>;
 type ResponseInterceptor = (response: Response) => Response | Promise<Response>;
-type Options = {
+type Settings = {
   headers: Header;
   baseUrl: string;
   timeout: number;
   requestInterceptor: RequestInterceptor;
   responseInterceptor: ResponseInterceptor;
 };
-let defaultOptions: Options = {
+let defaultSettings: Settings = {
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -74,8 +74,8 @@ let defaultOptions: Options = {
   requestInterceptor: (request) => request,
   responseInterceptor: (response) => response,
 };
-export function setDefaultOptions(options: Partial<typeof defaultOptions>): void {
-  defaultOptions = { ...defaultOptions, ...options };
+export function setApiDefaultSettings(options: Partial<typeof defaultSettings>): void {
+  defaultSettings = { ...defaultSettings, ...options };
 }
 
 /**
@@ -139,17 +139,17 @@ function requestJson(uri: string, requestInit: RequestInit, body?: object): Prom
 function request<ResponseData = {}>(
   method: RestMethod,
   url: string,
-  options: RequestOptions = { headers: defaultOptions.headers },
+  options: RequestOptions = { headers: defaultSettings.headers },
 ): ApiResult<ResponseData> {
   const abortController = new AbortController();
   const abortSignal = abortController.signal;
 
   const callPromise: CallPromise<ResponseData> = () =>
     withTimeout(
-      defaultOptions.timeout,
+      defaultSettings.timeout,
       new Promise<ResponseData>((resolve, reject): void => {
         // Intercept Request Options
-        let optionsPromise: RequestOptions | Promise<RequestOptions> = defaultOptions.requestInterceptor(
+        let optionsPromise: RequestOptions | Promise<RequestOptions> = defaultSettings.requestInterceptor(
           options,
           url,
           method,
@@ -163,10 +163,10 @@ function request<ResponseData = {}>(
             try {
               const { queryParams, body, files, headers } = options;
 
-              const constructedUri = constructUriWithQueryParams(url, queryParams, defaultOptions.baseUrl);
+              const constructedUri = constructUriWithQueryParams(url, queryParams, defaultSettings.baseUrl);
 
               const requestInitWithoutBody: RequestInit = {
-                headers: headers || defaultOptions.headers,
+                headers: headers || defaultSettings.headers,
                 method: method,
                 signal: abortSignal,
               };
@@ -188,7 +188,7 @@ function request<ResponseData = {}>(
               }
 
               let response = await responsePromise;
-              const responseOrPromise = defaultOptions.responseInterceptor(response);
+              const responseOrPromise = defaultSettings.responseInterceptor(response);
               if (isPromise(responseOrPromise)) {
                 response = await responseOrPromise;
               } else {

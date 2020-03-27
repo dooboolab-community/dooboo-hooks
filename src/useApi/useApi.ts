@@ -100,7 +100,7 @@ const useApi = <ResponseData>(
 ): State<ResponseData> => {
   const [state, dispatch] = useReducer<(prevState: State<ResponseData>, action: Action) => State<ResponseData>>(
     reducer,
-    initialState,
+  initialState,
   );
 
   const previousDependencies = useRef<any[]>();
