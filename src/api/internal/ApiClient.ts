@@ -57,6 +57,7 @@ type RequestOptionsInterceptor = (
   url: string,
   method: RestMethod,
 ) => RequestOptions | Promise<RequestOptions>;
+type ResponseDataInterceptorAddOn = 'CAMELCASE';
 type ResponseDataInterceptor<ResponseData extends JSONCandidate> = (
   responseData: ResponseData,
 ) => ResponseData | Promise<ResponseData>;
@@ -66,9 +67,11 @@ type Settings<ResponseData extends JSONCandidate> = {
   timeout: number;
   requestInterceptor: RequestOptionsInterceptor;
   responseInterceptor: ResponseDataInterceptor<ResponseData>;
+  responseInterceptorAddons: ResponseDataInterceptorAddOn[];
   responseCodeWhiteListRange: { minInclude: number; maxExclude: number };
   responseCodeWhiteList: number[];
   responseCodeBlackList: number[];
+  logging: boolean;
 };
 const initialSettings: Settings<{}> = {
   headers: {
@@ -79,9 +82,11 @@ const initialSettings: Settings<{}> = {
   timeout: 5000,
   requestInterceptor: (request) => request,
   responseInterceptor: (response) => response,
+  responseInterceptorAddons: [],
   responseCodeWhiteListRange: { minInclude: 200, maxExclude: 300 },
   responseCodeWhiteList: [],
   responseCodeBlackList: [],
+  logging: false,
 };
 let defaultSettings = initialSettings;
 export function setApiDefaultSettings(options: Partial<typeof defaultSettings>): void {
@@ -186,8 +191,9 @@ function request<ResponseData = {}>(
 
               let responsePromise: Promise<Response>;
 
-              // TODO remove console
-              console.log(`🌈[${method}] - [${constructedUri}] - ${JSON.stringify(body, null, 2)}`);
+              if (defaultSettings.logging) {
+                console.log(`🌈[${method}] - [${constructedUri}] - ${JSON.stringify(body, null, 2)}`);
+              }
 
               if (headers?.['Content-Type'] === 'multipart/form-data' || (method === 'POST' && files)) {
                 responsePromise = upload(constructedUri, requestInitWithoutBody, files, body);
@@ -223,8 +229,9 @@ function request<ResponseData = {}>(
               try {
                 // TODO currently, only return response as json
                 let json = await response.json();
-                // TODO remove console
-                console.log(`🌈Api Response Body - ${JSON.stringify(json, null, 2)}`);
+                if (defaultSettings.logging) {
+                  console.log(`🌈Api Response Body - ${JSON.stringify(json, null, 2)}`);
+                }
 
                 const responseDataOrPromise = defaultSettings.responseInterceptor(json);
                 if (isPromise(responseDataOrPromise)) {
@@ -233,17 +240,21 @@ function request<ResponseData = {}>(
                   json = responseDataOrPromise;
                 }
 
-                responseData = (convertObjectKeysCamelCaseFromSnakeCase(json) as unknown) as ResponseData;
+                responseData = json as ResponseData;
+                // AddOns
+                if (defaultSettings.responseInterceptorAddons.includes('CAMELCASE')) {
+                  responseData = (convertObjectKeysCamelCaseFromSnakeCase(json) as unknown) as ResponseData;
+                }
               } catch (e) {
                 // Ignore empty body parsing or not json body
-                // console.log(`🌈Api Response Body JSON parse Fail - ${e}`);
-                // reject(e);
               } finally {
                 resolve(responseData);
               }
             } catch (e) {
               // TODO remove console
-              console.warn(e);
+              if (defaultSettings.logging) {
+                console.warn(e);
+              }
               reject(e);
             }
           },
