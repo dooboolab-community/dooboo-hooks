@@ -1,13 +1,14 @@
 import { clearApiDefaultSettings, setApiDefaultSettings } from '..';
 
 import { FetchMock } from 'jest-fetch-mock';
-import { ResponseInterceptorAddOn } from '../internal/ApiClient';
+import { JSONCandidate } from '../internal/convertObjectKeysCamelCaseFromSnakeCase';
+import { ResponseInterceptorAddOn } from '..';
 import RestClient from '../RestAdapter';
 
 jest.useRealTimers();
 
 declare const fetchMock: FetchMock;
-function mockSimpleResponseOnce(uri?: string | RegExp, body?: object): void {
+function mockSimpleResponseOnce(uri?: string | RegExp, body?: JSONCandidate): void {
   fetchMock.resetMocks();
   const simpleBody = body ? JSON.stringify(body) : JSON.stringify({ success: true });
 
@@ -163,12 +164,18 @@ describe('Call - ', () => {
 
   it('[GIVEN] with CAMELCASE response interceptor addon [WHEN] response is snake_case [THEN] response data is camelCase', async () => {
     setApiDefaultSettings({ responseInterceptorAddons: [ResponseInterceptorAddOn.CAMELCASE] });
-    fetchMock.resetMocks();
     mockSimpleResponseOnce(null, { my_name: 'mj' });
     const [dataPromise] = RestClient.GET<{ myName: string }>('');
     const data = await dataPromise();
     expect(data.myName).toBe('mj');
     clearApiDefaultSettings();
+  });
+
+  it('[GIVEN] response with array [THEN] call success', async () => {
+    mockSimpleResponseOnce(null, [1, 2, { name: 'mj' }, 4, [1, 2, 3, 4, 5]]);
+    const [dataPromise] = RestClient.GET<number[]>('');
+    const data = await dataPromise();
+    expect(data).toEqual([1, 2, { name: 'mj' }, 4, [1, 2, 3, 4, 5]]);
   });
 
   describe.each(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])('RestAdapter[%p] - ', (restMethod): void => {
