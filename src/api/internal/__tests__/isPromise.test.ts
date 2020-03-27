@@ -1,15 +1,13 @@
-const errorPromise = new Promise((r, e) => setTimeout(e, 1500));
-const promise = new Promise((r) =>
-  setTimeout(() => {
-    console.log('hi');
-    r();
-  }, 1500),
-);
+import isPromise from '../isPromise';
 
-it('sample', async () => {
-  try {
-    await errorPromise;
-  } catch (e) {
-    console.log('catch : ' + e);
-  }
+it('promise is determined Promise', () => {
+  expect(isPromise(new Promise((r) => r()))).toBe(true);
+});
+it('others are determined not Promise', () => {
+  expect(isPromise({})).toBe(false);
+  expect(isPromise([])).toBe(false);
+  expect(isPromise(1)).toBe(false);
+  expect(isPromise('mj')).toBe(false);
+  expect(isPromise('promise')).toBe(false);
+  expect(isPromise(() => {})).toBe(false);
 });

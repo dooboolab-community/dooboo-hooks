@@ -66,8 +66,11 @@ type Settings<ResponseData extends JSONCandidate> = {
   timeout: number;
   requestInterceptor: RequestOptionsInterceptor;
   responseInterceptor: ResponseDataInterceptor<ResponseData>;
+  responseCodeWhiteListRange: { minInclude: number; maxExclude: number };
+  responseCodeWhiteList: number[];
+  responseCodeBlackList: number[];
 };
-let defaultSettings: Settings<{}> = {
+const initialSettings: Settings<{}> = {
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -76,9 +79,16 @@ let defaultSettings: Settings<{}> = {
   timeout: 5000,
   requestInterceptor: (request) => request,
   responseInterceptor: (response) => response,
+  responseCodeWhiteListRange: { minInclude: 200, maxExclude: 300 },
+  responseCodeWhiteList: [],
+  responseCodeBlackList: [],
 };
+let defaultSettings = initialSettings;
 export function setApiDefaultSettings(options: Partial<typeof defaultSettings>): void {
-  defaultSettings = { ...defaultSettings, ...options };
+  defaultSettings = { ...initialSettings, ...options };
+}
+export function clearApiDefaultSettings(): void {
+  defaultSettings = initialSettings;
 }
 
 /**
@@ -191,6 +201,24 @@ function request<ResponseData = {}>(
               }
 
               const response = await responsePromise;
+
+              const { status: statusCode } = response;
+              const { minInclude: min, maxExclude: max } = defaultSettings.responseCodeWhiteListRange;
+              const whiteList = defaultSettings.responseCodeWhiteList;
+              const blackList = defaultSettings.responseCodeBlackList;
+              if ((statusCode < min || statusCode >= max) && !whiteList.includes(statusCode)) {
+                reject(
+                  new Error(
+                    // eslint-disable-next-line max-len
+                    `Status Code [${statusCode}] doesn't exist in responseCodeWhiteListRange [${min}, ${max}). If you want to include ${statusCode} to white list, use responseCodeWhiteList settings in setApiDefaultSettings()`,
+                  ),
+                );
+                return;
+              } else if (blackList.includes(statusCode)) {
+                reject(new Error(`Status Code [${statusCode}] exists in responseCodeBlackList [${blackList}]`));
+                return;
+              }
+
               let responseData: ResponseData = {} as ResponseData;
               try {
                 // TODO currently, only return response as json
