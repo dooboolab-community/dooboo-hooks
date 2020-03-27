@@ -1,7 +1,8 @@
 import 'abortcontroller-polyfill';
 
+import convertObjectKeysCamelCaseFromSnakeCase, { JSONCandidate } from './convertObjectKeysCamelCaseFromSnakeCase';
+
 import { constructUriWithQueryParams } from './constructUriWithQueryParams';
-import convertObjectKeysCamelCaseFromSnakeCase from './convertObjectKeysCamelCaseFromSnakeCase';
 import isPromise from './isPromise';
 
 declare const global;
@@ -51,20 +52,22 @@ function withTimeout<T>(ms, promise: Promise<T>): Promise<T> {
   ]) as Promise<T>;
 }
 
-type RequestInterceptor = (
+type RequestOptionsInterceptor = (
   request: RequestOptions,
   url: string,
   method: RestMethod,
 ) => RequestOptions | Promise<RequestOptions>;
-type ResponseInterceptor = (response: Response) => Response | Promise<Response>;
-type Settings = {
+type ResponseDataInterceptor<ResponseData extends JSONCandidate> = (
+  responseData: ResponseData,
+) => ResponseData | Promise<ResponseData>;
+type Settings<ResponseData extends JSONCandidate> = {
   headers: Header;
   baseUrl: string;
   timeout: number;
-  requestInterceptor: RequestInterceptor;
-  responseInterceptor: ResponseInterceptor;
+  requestInterceptor: RequestOptionsInterceptor;
+  responseInterceptor: ResponseDataInterceptor<ResponseData>;
 };
-let defaultSettings: Settings = {
+let defaultSettings: Settings<{}> = {
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -187,19 +190,21 @@ function request<ResponseData = {}>(
                 responsePromise = requestJson(constructedUri, requestInitWithoutBody, body);
               }
 
-              let response = await responsePromise;
-              const responseOrPromise = defaultSettings.responseInterceptor(response);
-              if (isPromise(responseOrPromise)) {
-                response = await responseOrPromise;
-              } else {
-                response = responseOrPromise;
-              }
+              const response = await responsePromise;
               let responseData: ResponseData = {} as ResponseData;
               try {
                 // TODO currently, only return response as json
-                const json = await response.json();
+                let json = await response.json();
                 // TODO remove console
                 console.log(`🌈Api Response Body - ${JSON.stringify(json, null, 2)}`);
+
+                const responseDataOrPromise = defaultSettings.responseInterceptor(json);
+                if (isPromise(responseDataOrPromise)) {
+                  json = await responseDataOrPromise;
+                } else {
+                  json = responseDataOrPromise;
+                }
+
                 responseData = (convertObjectKeysCamelCaseFromSnakeCase(json) as unknown) as ResponseData;
               } catch (e) {
                 // TODO remove console
