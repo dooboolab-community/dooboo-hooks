@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "lib": ["es2017"],
+    "lib": ["es2020"],
     "jsx": "react",
     "noResolve": false,
     "noImplicitAny": false,
@@ -9,13 +9,23 @@
     "module": "es2015",
     "moduleResolution": "node",
     "target": "es5",
+    "noEmit": false,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "declaration": true,
     "esModuleInterop": true,
-    "outDir": "./dist",                        /* Redirect output structure to the directory. */
-    "rootDir": "./src"
+    "outDir": "dist" /* Redirect output structure to the directory. */,
+    "rootDir": "src"
   },
   "compileOnSave": true,
-  "exclude": ["node_modules"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "**/*.test.tsx", "**/*.spec.ts", "**/*.test.ts", "**/*.spec.tsx"],
+  "jest": {
+    "globals": {
+      "ts-jest": {
+        "skipBabel": true
+        // "tsConfigFile": "my-tsconfig.json"
+      }
+    }
+  }
 }

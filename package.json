@@ -6,8 +6,9 @@
   "types": "dist/index.d.ts",
   "postinstall": "dooboolab-welcome postinstall",
   "scripts": {
+    "check": "yarn lint && yarn tsc && yarn jest --coverage -u",
     "build": "tsc",
-    "lint": "eslint -c .eslintrc.js 'index.ts'",
+    "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
     "test": "jest",
     "test:typescript": "tsc --noEmit",
     "tsc:sync": "npx typesync",
@@ -28,7 +29,9 @@
     "react-native": ">=0.59"
   },
   "dependencies": {
-    "dooboolab-welcome": "^1.1.1"
+    "abortcontroller-polyfill": "^1.4.0",
+    "dooboolab-welcome": "^1.1.1",
+    "url": "^0.11.0"
   },
   "devDependencies": {
     "@dooboo/eslint-config": "^0.3.8",
@@ -38,11 +41,14 @@
     "@types/react": "16.9.23",
     "@types/react-native": "0.61.20",
     "eslint": "^6.8.0",
+    "eslint-plugin-react-hooks": "^2.5.0",
     "import-sort-style-eslint": "^6.0.0",
     "jest": "^25.1.0",
     "jest-fetch-mock": "^3.0.3",
     "prettier": "^1.19.1",
     "prettier-plugin-import-sort": "^0.0.3",
+    "react": "^16.13.0",
+    "react-test-renderer": "^16.13.0",
     "ts-jest": "^25.2.1",
     "typescript": "^3.8.3"
   },
